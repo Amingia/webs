@@ -1,31 +1,36 @@
-# Dashboard de Cristina Pareja (Versión PHP Scraping)
+# Dashboard - Monitorización de Spotify (Versión 4 - Definitiva)
 
-Este es el panel de control de monitorización artística para la cantante Cristina Pareja. En esta versión avanzada, el sistema extrae automáticamente y en tiempo real el crecimiento de su base de fans directamente de las páginas públicas de Instagram y Spotify.
+Este es el panel de control de monitorización artística, diseñado específicamente como una **versión final y real** libre de datos inventados y falsos. Su objetivo es brindar un cuadro de mandos minimalista y elegante enfocado 100% en los datos reales extraídos en vivo desde Spotify.
 
-## ¿Cómo configurar las URLs?
+## Características Técnicas
 
-El sistema está preparado para no requerir bases de datos ni instalación compleja. Simplemente debes decirle a qué perfiles quieres que se conecte:
+*   **Puro PHP:** Desarrollado sin frameworks complejos como Node.js o React. Funciona nativamente en cualquier servidor o hosting compartido básico como **OVH**.
+*   **Cero Datos Falsos:** Se ha eliminado toda gráfica inventada o historial simulado por falta de base de datos. Lo que ves es exactamente lo que extrae en el momento.
+*   **Integración Oficial:** El listado de canciones es el iframe del reproductor oficial de "Spotify for Artists".
 
-1. Ve a la carpeta del proyecto y abre el archivo `config.php`.
-2. Ábrelo con el **Bloc de notas** o cualquier editor de código.
-3. Sustituye las URLs que vienen de ejemplo por las URLs reales de los perfiles de la artista.
-4. **Guarda el archivo**. ¡Eso es todo!
+## Instrucciones de Configuración
 
-## Guía de subida a OVH (Hosting Básico)
+Para que el panel funcione con el artista que desees, solo necesitas cambiar dos líneas:
 
-El código utiliza PHP nativo, por lo que es 100% compatible con cualquier plan de hosting compartido de OVH sin necesidad de configurar Node.js, bases de datos o comandos por terminal.
+1. Abre la carpeta del proyecto y busca el archivo `config.php`.
+2. Edítalo usando el Bloc de notas u otro editor básico.
+3. Actualiza las dos únicas variables disponibles:
+   *   `$url_spotify_perfil`: Pega aquí el enlace web público del perfil del artista en Spotify (ej. *https://open.spotify.com/artist/...*). De este enlace extraerá los números automáticos.
+   *   `$url_spotify_iframe`: Pega el código HTML completo que te da Spotify. Para conseguirlo, ve al perfil del artista en Spotify, haz clic en los tres puntos (Opciones) > Compartir > **Insertar artista** > Copiar.
+4. **Guarda el archivo**.
 
-Sigue estos pasos para publicarlo:
+## Instrucciones de Subida a tu Hosting (OVH)
 
-1. Inicia sesión en el panel de control de tu cuenta de OVH.
-2. Ve a la sección **Web Cloud** y luego a **Alojamientos**.
-3. Selecciona tu dominio en la barra lateral.
-4. Haz clic en la pestaña **FTP - SSH**.
-5. Abre el **Explorador FTP** (WebFTP) o usa un programa como FileZilla.
-6. Entra en la carpeta pública principal (normalmente `www` o `public_html`).
-7. **Sube todos los archivos** de esta carpeta (`index.php`, `config.php`, `scraper.php`, `app.js`, `style.css`) directamente en la carpeta raíz.
-   *Nota: Borra cualquier archivo `index.html` viejo que pueda haber en tu servidor para que lea el nuevo `index.php`.*
-8. Carga tu página web. El sistema buscará las URLs indicadas y mostrará los KPIs actualizados.
+Desplegar este panel es extremadamente rápido ("subir y listo"):
 
-### Sobre el sistema Anti-Bot
-Ten en cuenta que Instagram y Spotify tienen medidas de seguridad que a veces bloquean peticiones automáticas. Si esto ocurre, el Dashboard no se romperá; simplemente mostrará que el dato no está disponible temporalmente o usará un último valor simulado para no dejar los gráficos vacíos.
+1. Accede al panel de control de tu cuenta de OVH.
+2. Entra en **Web Cloud** > **Alojamientos** y selecciona tu dominio.
+3. Abre la pestaña **FTP - SSH** y usa el **Explorador FTP** (o FileZilla si lo prefieres).
+4. Entra en la carpeta pública raíz de tu servidor (normalmente llamada `www` o `public_html`).
+5. **Copia y sube** directamente a esa carpeta estos 3 archivos:
+   *   `index.php`
+   *   `config.php`
+   *   `scraper.php`
+6. Listo. Accede a tu página web desde el navegador.
+
+*Nota: Asegúrate de que no haya ningún archivo llamado `index.html` viejo estorbando en esa carpeta para que tu servidor lea correctamente este nuevo `index.php`.*

@@ -1,15 +1,15 @@
 <?php
 // ==========================================
-// MOTOR DE SCRAPING
+// MOTOR DE SCRAPING (VERSIÓN 4 - REALIDAD BRUTA)
 // ==========================================
-// Este archivo lee las URLs de config.php, se conecta a ellas
-// y extrae los datos de las etiquetas meta públicas.
+// Este archivo lee la URL de Spotify de config.php, se conecta a ella
+// mediante cURL y extrae exclusivamente de la etiqueta <meta property="og:description">
+// Sin inventar históricos ni simular nada extra.
 
 require_once 'config.php';
 
 function obtenerHTML($url) {
     // Configuración de cURL haciéndose pasar por un navegador real
-    // para evitar bloqueos anti-bot básicos.
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -28,63 +28,32 @@ function obtenerHTML($url) {
     return null; // Fallo en la descarga o bloqueo
 }
 
-function rasparInstagram($url) {
-    $html = obtenerHTML($url);
-    if (!$html) return "Dato no disponible temporalmente";
-
-    // En Instagram, la meta description tiene este formato:
-    // <meta property="og:description" content="18K Followers, 500 Following, 100 Posts..." />
-    if (preg_match('/<meta property="og:description" content="([^"]+)"/i', $html, $matches)) {
-        $desc = $matches[1];
-        // Extraer los seguidores (antes de la palabra "Followers" o "seguidores")
-        if (preg_match('/([\d\.,]+[KMB]?)\s*(Followers|seguidores)/i', $desc, $m)) {
-            return strtoupper(str_replace(',', '.', $m[1]));
-        }
-    }
-
-    return "Dato no disponible temporalmente";
-}
-
-function rasparSpotify($url) {
+function rasparSpotifyReal($url) {
     $html = obtenerHTML($url);
     if (!$html) {
         return [
-            'seguidores' => "Dato no disponible temporalmente",
-            'oyentes' => "Dato no disponible temporalmente"
+            'seguidores' => "Dato no disponible",
+            'oyentes' => "Dato no disponible"
         ];
     }
 
-    // En Spotify, el og:description suele ser:
-    // <meta property="og:description" content="Artist · 45K monthly listeners." />
-    // O variaciones dependiendo del idioma. Vamos a buscar cifras cerca de "listeners", "oyentes", "followers", "seguidores"
+    $seguidores = "Dato no disponible";
+    $oyentes = "Dato no disponible";
 
-    $seguidores = "Dato no disponible temporalmente";
-    $oyentes = "Dato no disponible temporalmente";
-
-    // Expresión regular mejorada para og:description en Spotify
+    // Buscar exclusivamente en la meta description
     if (preg_match('/<meta property="og:description" content="([^"]+)"/i', $html, $matches)) {
         $desc = $matches[1];
 
-        // Buscar oyentes mensuales
+        // Buscar oyentes mensuales ("monthly listeners" o "oyentes mensuales")
         if (preg_match('/([\d\.,]+[KMB]?)\s*(monthly listeners|oyentes mensuales)/i', $desc, $m)) {
              $oyentes = strtoupper(str_replace(',', '.', $m[1]));
         }
 
-        // A veces Spotify no pone los seguidores en la meta description,
-        // pero podemos intentar extraer un dato general si está disponible.
-        // Si no está en el HTML plano extraíble fácilmente, devolveremos un placeholder o un valor estimado/fallback.
-        // Para este ejercicio y dadas las limitaciones de scraping puro sin API:
-        // Si no encontramos seguidores explícitos, dejamos el fallback.
+        // Buscar seguidores ("followers" o "seguidores") de forma limpia
         if (preg_match('/([\d\.,]+[KMB]?)\s*(followers|seguidores)/i', $desc, $m)) {
             $seguidores = strtoupper(str_replace(',', '.', $m[1]));
-        } else {
-             // Mock fallback ya que las páginas SPA de Spotify cargan seguidores vía JS
-             $seguidores = "11.2K (Simulado)";
         }
     }
-
-    // Si ambos fallaron porque la estructura cambió, proveer fallback gracefully.
-    if ($oyentes === "Dato no disponible temporalmente") $oyentes = "45.0K (Simulado)";
 
     return [
         'seguidores' => $seguidores,
@@ -92,32 +61,6 @@ function rasparSpotify($url) {
     ];
 }
 
-// Ejecutar el raspado de forma segura
-$igSeguidores = rasparInstagram($config['url_instagram']);
-$spotifyDatos = rasparSpotify($config['url_spotify']);
-
-// Preparar los datos finales para ser inyectados en el Frontend
-$datosScraping = [
-    'seguidoresInstagram' => $igSeguidores,
-    'seguidoresSpotify' => $spotifyDatos['seguidores'],
-    'oyentesMensuales' => $spotifyDatos['oyentes'],
-
-    // Canciones y Ciudades se mantienen estáticas en este ejemplo
-    // ya que extraer tablas profundas de Spotify requiere API real,
-    // pero mantenemos la estructura para que app.js no se rompa.
-    'canciones' => [
-        [ 'titulo' => "Ecos de Medianoche", 'reproducciones' => 1250000 ],
-        [ 'titulo' => "Luces de Neón", 'reproducciones' => 850000 ],
-        [ 'titulo' => "Sombra y Luz", 'reproducciones' => 620000 ],
-        [ 'titulo' => "Vuelo sin Retorno", 'reproducciones' => 450000 ],
-        [ 'titulo' => "Amanecer en Madrid", 'reproducciones' => 310000 ]
-    ],
-    'ciudades' => [
-        [ 'nombre' => "Madrid", 'oyentes' => 12000 ],
-        [ 'nombre' => "Barcelona", 'oyentes' => 9500 ],
-        [ 'nombre' => "Ciudad de México", 'oyentes' => 8200 ],
-        [ 'nombre' => "Valencia", 'oyentes' => 4500 ],
-        [ 'nombre' => "Sevilla", 'oyentes' => 3800 ]
-    ]
-];
+// Ejecutar el raspado de forma segura y real
+$datosSpotify = rasparSpotifyReal($config['url_spotify_perfil']);
 ?>

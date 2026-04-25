@@ -7,7 +7,7 @@ require_once 'scraper.php';
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Cristina Pareja</title>
+  <title>Dashboard - Monitorización de Spotify</title>
 
   <!-- Tailwind CSS vía CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,130 +20,70 @@ require_once 'scraper.php';
           colors: {
             spotify: '#1DB954',
             'spotify-hover': '#1ed760',
-            instagram: '#db2777',
           }
         }
       }
     }
   </script>
 
-  <!-- Estilos propios -->
-  <link rel="stylesheet" href="style.css">
-
   <!-- Lucide Icons vía CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Chart.js vía CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="min-h-screen bg-neutral-950 text-neutral-100 p-4 md:p-8 font-sans">
+<body class="min-h-screen bg-neutral-950 text-neutral-100 p-4 md:p-8 font-sans overflow-x-hidden">
 
-  <div class="max-w-7xl mx-auto space-y-8">
+  <div class="max-w-4xl mx-auto space-y-8">
 
-    <!-- 1. CABECERA (Header) -->
-    <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-neutral-900/50 p-6 rounded-2xl border border-neutral-800 backdrop-blur-sm">
-      <div class="flex items-center gap-6">
-        <!-- Foto de perfil -->
-        <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-orange-500 p-1 flex-shrink-0">
-          <div class="w-full h-full rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden">
-            <span class="text-2xl font-bold text-neutral-400">CP</span>
+    <!-- 1. CABECERA (Header Híbrido Perfecto) -->
+    <header class="flex flex-col md:flex-row items-center justify-between gap-6 bg-neutral-900/50 p-6 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl backdrop-blur-md">
+
+      <!-- Información Genérica y Título -->
+      <div class="flex items-center gap-6 w-full md:w-auto text-center md:text-left flex-col md:flex-row">
+        <!-- Foto de perfil genérica -->
+        <div class="w-28 h-28 rounded-full bg-neutral-800 p-1 flex-shrink-0 shadow-lg border border-neutral-700">
+          <div class="w-full h-full rounded-full bg-neutral-900 flex items-center justify-center overflow-hidden">
+            <i data-lucide="user" class="w-12 h-12 text-neutral-500"></i>
           </div>
         </div>
 
         <div>
-          <h1 class="text-3xl font-bold tracking-tight mb-2">Cristina Pareja</h1>
-          <div class="flex gap-4">
-            <a href="<?php echo htmlspecialchars($config['url_spotify']); ?>" target="_blank" class="flex items-center gap-2 text-sm font-medium text-spotify hover:text-spotify-hover transition-colors">
-              <i data-lucide="music" class="w-4 h-4"></i>
-              Spotify <i data-lucide="external-link" class="w-3 h-3"></i>
-            </a>
-            <a href="<?php echo htmlspecialchars($config['url_instagram']); ?>" target="_blank" class="flex items-center gap-2 text-sm font-medium text-pink-500 hover:text-pink-400 transition-colors">
-              <i data-lucide="camera" class="w-4 h-4"></i>
-              Instagram <i data-lucide="external-link" class="w-3 h-3"></i>
-            </a>
-          </div>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2 text-white">Monitorización de Spotify</h1>
+          <a href="<?php echo htmlspecialchars($config['url_spotify_perfil']); ?>" target="_blank" class="inline-flex items-center justify-center md:justify-start gap-2 text-sm font-semibold text-spotify hover:text-spotify-hover transition-colors">
+            <i data-lucide="music" class="w-5 h-5"></i>
+            Perfil Oficial <i data-lucide="external-link" class="w-4 h-4"></i>
+          </a>
         </div>
       </div>
 
-      <!-- Tarjetas de KPIs -->
-      <div class="flex flex-wrap md:flex-nowrap gap-4 w-full md:w-auto">
-        <!-- Seguidores Instagram -->
-        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center text-center">
-          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-1">
-            <i data-lucide="camera" class="w-4 h-4 text-pink-500"></i>
-            <span class="text-xs font-semibold uppercase tracking-wider">Seguidores</span>
+      <!-- Tarjetas de KPIs (Datos Reales Scrapeados) -->
+      <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto mt-6 md:mt-0">
+        <!-- Seguidores -->
+        <div class="flex-1 bg-neutral-800/80 p-5 rounded-2xl border border-neutral-700 flex flex-col items-center justify-center text-center shadow-inner min-w-[160px]">
+          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-2">
+            <i data-lucide="users" class="w-5 h-5 text-spotify"></i>
+            <span class="text-xs font-bold uppercase tracking-widest text-neutral-300">Seguidores</span>
           </div>
-          <span id="kpi-ig-seguidores" class="text-2xl font-bold">--</span>
-        </div>
-
-        <!-- Seguidores Spotify -->
-        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center text-center">
-          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-1">
-            <i data-lucide="users" class="w-4 h-4 text-spotify"></i>
-            <span class="text-xs font-semibold uppercase tracking-wider">Seguidores (Sp)</span>
-          </div>
-          <span id="kpi-sp-seguidores" class="text-2xl font-bold">--</span>
+          <span class="<?php echo (strlen($datosSpotify['seguidores']) > 10) ? 'text-sm' : 'text-3xl'; ?> font-black text-white">
+             <?php echo htmlspecialchars($datosSpotify['seguidores']); ?>
+          </span>
         </div>
 
         <!-- Oyentes Mensuales -->
-        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center text-center">
-          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-1">
-            <i data-lucide="headphones" class="w-4 h-4 text-spotify"></i>
-            <span class="text-xs font-semibold uppercase tracking-wider">Oyentes Mens.</span>
+        <div class="flex-1 bg-neutral-800/80 p-5 rounded-2xl border border-neutral-700 flex flex-col items-center justify-center text-center shadow-inner min-w-[160px]">
+          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-2">
+            <i data-lucide="headphones" class="w-5 h-5 text-spotify"></i>
+            <span class="text-xs font-bold uppercase tracking-widest text-neutral-300">Oyentes Mens.</span>
           </div>
-          <span id="kpi-sp-oyentes" class="text-2xl font-bold">--</span>
+          <span class="<?php echo (strlen($datosSpotify['oyentes']) > 10) ? 'text-sm' : 'text-3xl'; ?> font-black text-white">
+             <?php echo htmlspecialchars($datosSpotify['oyentes']); ?>
+          </span>
         </div>
       </div>
     </header>
 
-    <!-- 2. SECCIÓN DE CRECIMIENTO (Gráficos) -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Gráfico Instagram -->
-      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
-        <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
-          <i data-lucide="camera" class="w-5 h-5 text-pink-500"></i>
-          Crecimiento en Instagram (Últimos 30 días)
-        </h2>
-        <div class="relative h-[300px] w-full">
-          <canvas id="chartInstagram"></canvas>
-        </div>
-      </div>
-
-      <!-- Gráfico Spotify -->
-      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
-        <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
-          <i data-lucide="music" class="w-5 h-5 text-spotify"></i>
-          Crecimiento en Spotify (Últimos 30 días)
-        </h2>
-        <div class="relative h-[300px] w-full">
-          <canvas id="chartSpotify"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3 y 4. RENDIMIENTO MUSICAL Y DEMOGRAFÍA -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Top 5 Canciones -->
-      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
-        <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
-          <i data-lucide="headphones" class="w-5 h-5 text-neutral-400"></i>
-          Top 5 Canciones Populares
-        </h2>
-        <div id="lista-canciones" class="space-y-5">
-          <!-- Las canciones se inyectan mediante JavaScript (app.js) -->
-        </div>
-      </div>
-
-      <!-- Top 5 Ciudades -->
-      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800">
-        <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
-          <i data-lucide="map-pin" class="w-5 h-5 text-neutral-400"></i>
-          Top 5 Ciudades de Escucha
-        </h2>
-        <div class="relative h-[280px] w-full">
-          <canvas id="chartDemografia"></canvas>
-        </div>
-      </div>
+    <!-- 2. CUERPO (Solución Oficial Iframe) -->
+    <section class="bg-neutral-900/40 p-2 rounded-3xl border border-neutral-800/50 shadow-2xl">
+      <!-- Se inyecta directamente el Iframe oficial de configuración -->
+      <?php echo $config['url_spotify_iframe']; ?>
     </section>
 
   </div>
@@ -152,14 +92,5 @@ require_once 'scraper.php';
   <script>
     lucide.createIcons();
   </script>
-
-  <!-- Inyectar los datos parseados desde PHP hacia Javascript -->
-  <script>
-    // Se generan los datos de raspado desde PHP a un objeto global de Javascript
-    const DATOS_SCRAPING = <?php echo json_encode($datosScraping); ?>;
-  </script>
-
-  <!-- Lógica de la aplicación -->
-  <script src="app.js"></script>
 </body>
 </html>
