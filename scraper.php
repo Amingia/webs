@@ -15,35 +15,46 @@ function rasparSpotifyReal($url) {
     // Valores por defecto seguros ante cualquier catástrofe
     $seguidores = "No disponible";
     $oyentes = "No disponible";
+    $canciones = [];
 
     try {
         if (empty($url)) {
             throw new Exception("La URL proporcionada está vacía.");
         }
 
-        // Configuración de cURL extremando precauciones (Anti-Error 500 en compartidos)
-        $ch = curl_init();
-        if ($ch === false) {
-             throw new Exception("No se pudo inicializar cURL.");
-        }
+        // Para que Spotify nos devuelva el HTML completo (con el initialState en Base64),
+        // a veces es necesario solicitarlo de forma plana si el cURL del servidor compartido
+        // viene con cabeceras que provocan respuestas reducidas.
+        // Intentaremos primero con file_get_contents si está disponible, y usaremos cURL como fallback genérico.
+        $html = false;
 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        // Intentar primero con file_get_contents (que suele traer el HTML sucio y completo de Spotify)
+        $context = stream_context_create([
+            "ssl" => ["verify_peer" => false, "verify_peer_name" => false],
+            "http" => ["header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n", "timeout" => 5]
+        ]);
+        $html = @file_get_contents($url, false, $context);
 
-        // Reglas estrictas Anti-Error 500 para OVH
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Evita fallos de certificados locales
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Timeout corto para no colgar el servidor
+        // Si falló, intentar con cURL estándar
+        if ($html === false || strlen($html) < 10000) {
+            $ch = curl_init();
+            if ($ch === false) throw new Exception("No se pudo inicializar cURL.");
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 
-        $html = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+            $html = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
 
-        if ($html === false || $httpCode >= 400) {
-            throw new Exception("Error cURL HTTP $httpCode: $curlError");
+            if ($html === false || $httpCode >= 400) {
+                throw new Exception("Error cURL HTTP $httpCode: $curlError");
+            }
         }
 
         // Buscar exclusivamente en la meta description mediante regex segura
@@ -60,6 +71,64 @@ function rasparSpotifyReal($url) {
                 $seguidores = strtoupper(str_replace(',', '.', $m[1]));
             }
         }
+
+        // Extracción Avanzada de Reproducciones Reales (Hydration Data)
+        if (preg_match('/<script id="initialState" type="text\/plain">([^<]+)<\/script>/i', $html, $matches)) {
+            $jsonBase64 = $matches[1];
+            $json = base64_decode($jsonBase64);
+            $data = json_decode($json, true);
+
+            if (is_array($data)) {
+                $tracks = [];
+
+                // Función recursiva para encontrar objetos de canciones
+                $findTracks = function($array) use (&$findTracks, &$tracks) {
+                    if (!is_array($array)) return;
+
+                    if (isset($array['playcount']) && isset($array['name']) && isset($array['uri']) && strpos($array['uri'], 'spotify:track:') === 0) {
+                        $coverUrl = '';
+                        // Buscar la portada en diferentes lugares del objeto
+                        if (isset($array['coverArt']) && isset($array['coverArt']['sources']) && count($array['coverArt']['sources']) > 0) {
+                            $coverUrl = $array['coverArt']['sources'][0]['url'];
+                        } else if (isset($array['albumOfTrack']) && isset($array['albumOfTrack']['coverArt']) && isset($array['albumOfTrack']['coverArt']['sources']) && count($array['albumOfTrack']['coverArt']['sources']) > 0) {
+                            $coverUrl = $array['albumOfTrack']['coverArt']['sources'][0]['url'];
+                        }
+
+                        $tracks[] = [
+                            'titulo' => $array['name'],
+                            'reproducciones' => (int)$array['playcount'],
+                            'miniatura' => $coverUrl
+                        ];
+                    }
+
+                    foreach ($array as $value) {
+                        if (is_array($value)) {
+                            $findTracks($value);
+                        }
+                    }
+                };
+
+                $findTracks($data);
+
+                // Eliminar duplicados y ordenar por reproducciones
+                $uniqueTracks = [];
+                foreach ($tracks as $track) {
+                    // Mantener la versión con portada si hay duplicados donde uno no tiene
+                    if (!isset($uniqueTracks[$track['titulo']]) || (empty($uniqueTracks[$track['titulo']]['miniatura']) && !empty($track['miniatura']))) {
+                        $uniqueTracks[$track['titulo']] = $track;
+                    }
+                }
+
+                $tracks = array_values($uniqueTracks);
+                usort($tracks, function($a, $b) {
+                    return $b['reproducciones'] <=> $a['reproducciones'];
+                });
+
+                // Quedarnos solo con el Top 5
+                $canciones = array_slice($tracks, 0, 5);
+            }
+        }
+
     } catch (Exception $e) {
         // En producción el catch absorbe el error silenciosamente.
         // Opcional: Se podría escribir en un log local ($e->getMessage())
@@ -68,12 +137,13 @@ function rasparSpotifyReal($url) {
 
     return [
         'seguidores' => $seguidores,
-        'oyentes' => $oyentes
+        'oyentes' => $oyentes,
+        'canciones' => $canciones
     ];
 }
 
 // Comprobar que la URL existe en config para evitar avisos PHP
-$urlSpotify = isset($config['url_spotify_perfil']) ? $config['url_spotify_perfil'] : '';
+$urlSpotify = isset($url_spotify_perfil) ? $url_spotify_perfil : '';
 
 // Ejecutar el raspado de forma segura
 $datosSpotify = rasparSpotifyReal($urlSpotify);

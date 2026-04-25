@@ -1,36 +1,19 @@
-# Dashboard - Monitorización de Spotify (Versión 4 - Definitiva)
+# Dashboard Analítico de Spotify (Versión 5 - Profesional)
 
-Este es el panel de control de monitorización artística, diseñado específicamente como una **versión final y real** libre de datos inventados y falsos. Su objetivo es brindar un cuadro de mandos minimalista y elegante enfocado 100% en los datos reales extraídos en vivo desde Spotify.
+Este es un panel de control corporativo, oscuro y minimalista diseñado para mostrar estadísticas en tiempo real extraídas directamente desde Spotify, 100% nativo y sin depender de bases de datos o configuraciones engorrosas de API.
 
-## Características Técnicas
+## Funcionalidades Principales
 
-*   **Puro PHP:** Desarrollado sin frameworks complejos como Node.js o React. Funciona nativamente en cualquier servidor o hosting compartido básico como **OVH**.
-*   **Cero Datos Falsos:** Se ha eliminado toda gráfica inventada o historial simulado por falta de base de datos. Lo que ves es exactamente lo que extrae en el momento.
-*   **Integración Oficial:** El listado de canciones es el iframe del reproductor oficial de "Spotify for Artists".
+*   **Puro PHP:** Compatible "out-of-the-box" con cualquier alojamiento básico compartido (como OVH).
+*   **Scraping Avanzado:** No solo lee la metaetiqueta pública para obtener Seguidores y Oyentes mensuales, sino que decodifica internamente el "Hydration Data" (`initialState`) de Spotify para obtener **las reproducciones exactas y reales** de tus 5 canciones más escuchadas en ese preciso segundo.
+*   **Protección Anti-Caídas:** En caso de que Spotify cambie su estructura interna, el código está blindado mediante `try/catch`. En lugar de romper la página, mostrará elegantemente un mensaje de "Datos no disponibles temporalmente".
 
-## Instrucciones de Configuración
+## Instrucciones: Instalar y Listo
 
-Para que el panel funcione con el artista que desees, solo necesitas cambiar dos líneas:
+El cliente no necesita saber programar ni lidiar con códigos de inserción Iframe.
 
-1. Abre la carpeta del proyecto y busca el archivo `config.php`.
-2. Edítalo usando el Bloc de notas u otro editor básico.
-3. Actualiza las dos únicas variables disponibles:
-   *   `$url_spotify_perfil`: Pega aquí el enlace web público del perfil del artista en Spotify (ej. *https://open.spotify.com/artist/...*). De este enlace extraerá los números automáticos.
-   *   `$url_spotify_iframe`: Pega el código HTML completo que te da Spotify. Para conseguirlo, ve al perfil del artista en Spotify, haz clic en los tres puntos (Opciones) > Compartir > **Insertar artista** > Copiar.
-4. **Guarda el archivo**.
-
-## Instrucciones de Subida a tu Hosting (OVH)
-
-Desplegar este panel es extremadamente rápido ("subir y listo"):
-
-1. Accede al panel de control de tu cuenta de OVH.
-2. Entra en **Web Cloud** > **Alojamientos** y selecciona tu dominio.
-3. Abre la pestaña **FTP - SSH** y usa el **Explorador FTP** (o FileZilla si lo prefieres).
-4. Entra en la carpeta pública raíz de tu servidor (normalmente llamada `www` o `public_html`).
-5. **Copia y sube** directamente a esa carpeta estos 3 archivos:
-   *   `index.php`
-   *   `config.php`
-   *   `scraper.php`
-6. Listo. Accede a tu página web desde el navegador.
-
-*Nota: Asegúrate de que no haya ningún archivo llamado `index.html` viejo estorbando en esa carpeta para que tu servidor lea correctamente este nuevo `index.php`.*
+1. Abre el archivo `config.php`.
+2. Verás una única línea con la variable `$url_spotify_perfil`. Sustituye la URL por la tuya.
+3. **Guarda el archivo**.
+4. Sube por FTP los 3 archivos (`index.php`, `config.php`, `scraper.php`) a la carpeta `www` o `public_html` de tu servidor.
+5. Listo. El dashboard profesional ya está funcionando.

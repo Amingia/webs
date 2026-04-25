@@ -85,10 +85,51 @@ require_once 'scraper.php';
       </div>
     </header>
 
-    <!-- 2. CUERPO (Solución Oficial Iframe) -->
-    <section class="bg-neutral-900/40 p-2 rounded-3xl border border-neutral-800/50 shadow-2xl">
-      <!-- Se inyecta directamente el Iframe oficial de configuración -->
-      <?php echo $config['url_spotify_iframe']; ?>
+    <!-- 2. CUERPO (Rendimiento de Pistas) -->
+    <section class="bg-neutral-900/60 p-6 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl backdrop-blur-sm">
+      <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+        <i data-lucide="bar-chart-2" class="w-6 h-6 text-spotify"></i>
+        Rendimiento de Pistas
+      </h2>
+
+      <div class="space-y-4">
+        <?php if (!empty($datosSpotify['canciones']) && is_array($datosSpotify['canciones'])): ?>
+            <?php foreach ($datosSpotify['canciones'] as $index => $cancion): ?>
+                <div class="flex items-center justify-between p-4 bg-neutral-800/50 rounded-2xl border border-neutral-700/50 hover:bg-neutral-800 transition-colors group">
+
+                  <div class="flex items-center gap-4">
+                    <span class="text-neutral-500 font-mono text-lg font-bold w-6 text-center"><?php echo $index + 1; ?></span>
+
+                    <div class="w-12 h-12 rounded-lg overflow-hidden border border-neutral-700 flex-shrink-0 bg-neutral-900">
+                      <?php if (!empty($cancion['miniatura'])): ?>
+                        <img src="<?php echo htmlspecialchars($cancion['miniatura']); ?>" alt="Portada" class="w-full h-full object-cover">
+                      <?php else: ?>
+                        <div class="w-full h-full flex items-center justify-center">
+                          <i data-lucide="music" class="w-5 h-5 text-neutral-600"></i>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+
+                    <span class="font-medium text-neutral-200 group-hover:text-white transition-colors line-clamp-1">
+                      <?php echo htmlspecialchars($cancion['titulo']); ?>
+                    </span>
+                  </div>
+
+                  <div class="text-right ml-4">
+                    <span class="text-lg font-mono font-bold text-spotify tracking-tight">
+                      <?php echo number_format((int)$cancion['reproducciones'], 0, ',', '.'); ?>
+                    </span>
+                  </div>
+
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="p-8 text-center bg-neutral-800/30 rounded-2xl border border-neutral-700/30 border-dashed">
+              <i data-lucide="alert-circle" class="w-8 h-8 text-neutral-500 mx-auto mb-3"></i>
+              <p class="text-neutral-400 font-medium">Datos de pistas no disponibles temporalmente.</p>
+            </div>
+        <?php endif; ?>
+      </div>
     </section>
 
   </div>
