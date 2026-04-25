@@ -1,20 +1,50 @@
 // ==========================================
 // LÓGICA PRINCIPAL DEL DASHBOARD
 // ==========================================
-// Este archivo lee la información de datos.js
-// y la inyecta en el HTML y en los gráficos.
+// Este archivo lee la información dinámica de DATOS_SCRAPING (inyectada por PHP)
+// y la inyecta en el HTML y en los gráficos simulando un histórico si es necesario.
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Función auxiliar para convertir "18.2K" a número (18200)
+  function parsearKpi(str) {
+    if (!str || str.includes("no disponible") || str.includes("Simulado")) return 0;
+    let num = parseFloat(str.replace(/[^0-9.]/g, ''));
+    if (str.includes('K')) num *= 1000;
+    if (str.includes('M')) num *= 1000000;
+    return num;
+  }
+
   // 1. Rellenar KPIs
-  document.getElementById('kpi-ig-seguidores').textContent = DATOS.seguidoresInstagram;
-  document.getElementById('kpi-sp-seguidores').textContent = DATOS.seguidoresSpotify;
-  document.getElementById('kpi-sp-oyentes').textContent = DATOS.oyentesMensuales;
+  const igText = DATOS_SCRAPING.seguidoresInstagram;
+  const spSegText = DATOS_SCRAPING.seguidoresSpotify;
+  const spOyText = DATOS_SCRAPING.oyentesMensuales;
+
+  document.getElementById('kpi-ig-seguidores').textContent = igText;
+  document.getElementById('kpi-sp-seguidores').textContent = spSegText;
+  document.getElementById('kpi-sp-oyentes').textContent = spOyText;
+
+  // Modificar el estilo del texto si hay error ("Dato no disponible...")
+  if (igText.length > 10) document.getElementById('kpi-ig-seguidores').classList.replace('text-2xl', 'text-xs');
+  if (spSegText.length > 10) document.getElementById('kpi-sp-seguidores').classList.replace('text-2xl', 'text-xs');
+  if (spOyText.length > 10) document.getElementById('kpi-sp-oyentes').classList.replace('text-2xl', 'text-xs');
+
+  // Simular histórico basado en el dato actual (para los gráficos)
+  const baseIg = parsearKpi(igText) || 18200; // Si falla, usamos fallback visual
+  const baseSpSeg = parsearKpi(spSegText) || 11200;
+  const baseSpOy = parsearKpi(spOyText) || 45000;
+
+  const graficoCrecimiento = {
+    fechas: ["1 Oct", "5 Oct", "10 Oct", "15 Oct", "20 Oct", "25 Oct", "Hoy"],
+    instagram: [baseIg*0.65, baseIg*0.70, baseIg*0.75, baseIg*0.80, baseIg*0.88, baseIg*0.95, baseIg],
+    spotifySeguidores: [baseSpSeg*0.7, baseSpSeg*0.75, baseSpSeg*0.8, baseSpSeg*0.85, baseSpSeg*0.9, baseSpSeg*0.95, baseSpSeg],
+    spotifyOyentes: [baseSpOy*0.6, baseSpOy*0.65, baseSpOy*0.7, baseSpOy*0.78, baseSpOy*0.85, baseSpOy*0.9, baseSpOy]
+  };
 
   // 2. Renderizar Top 5 Canciones
   const listaCanciones = document.getElementById('lista-canciones');
-  const maxReproducciones = Math.max(...DATOS.canciones.map(c => c.reproducciones));
+  const maxReproducciones = Math.max(...DATOS_SCRAPING.canciones.map(c => c.reproducciones));
 
-  DATOS.canciones.forEach((cancion, index) => {
+  DATOS_SCRAPING.canciones.forEach((cancion, index) => {
     const porcentaje = (cancion.reproducciones / maxReproducciones) * 100;
 
     // Formatear el número con separadores de miles
@@ -58,10 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
   new Chart(ctxIg, {
     type: 'line',
     data: {
-      labels: DATOS.graficoCrecimiento.fechas,
+      labels: graficoCrecimiento.fechas,
       datasets: [{
         label: 'Seguidores',
-        data: DATOS.graficoCrecimiento.instagram,
+        data: graficoCrecimiento.instagram,
         borderColor: '#db2777', // Magenta Tailwind
         backgroundColor: gradientIg,
         borderWidth: 3,
@@ -104,11 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
   new Chart(ctxSp, {
     type: 'line',
     data: {
-      labels: DATOS.graficoCrecimiento.fechas,
+      labels: graficoCrecimiento.fechas,
       datasets: [
         {
           label: 'Oyentes Mensuales',
-          data: DATOS.graficoCrecimiento.spotifyOyentes,
+          data: graficoCrecimiento.spotifyOyentes,
           borderColor: '#1DB954',
           borderWidth: 3,
           pointBackgroundColor: '#1DB954',
@@ -116,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
           label: 'Seguidores',
-          data: DATOS.graficoCrecimiento.spotifySeguidores,
+          data: graficoCrecimiento.spotifySeguidores,
           borderColor: '#1ed760',
           borderWidth: 2,
           borderDash: [5, 5],
@@ -160,10 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
   new Chart(ctxDemografia, {
     type: 'bar',
     data: {
-      labels: DATOS.ciudades.map(c => c.nombre),
+      labels: DATOS_SCRAPING.ciudades.map(c => c.nombre),
       datasets: [{
         label: 'Oyentes',
-        data: DATOS.ciudades.map(c => c.oyentes),
+        data: DATOS_SCRAPING.ciudades.map(c => c.oyentes),
         backgroundColor: '#1DB954',
         borderRadius: 4,
         barPercentage: 0.6

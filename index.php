@@ -1,3 +1,7 @@
+<?php
+// Incluir el scraper para obtener los datos al cargar la página
+require_once 'scraper.php';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -49,11 +53,11 @@
         <div>
           <h1 class="text-3xl font-bold tracking-tight mb-2">Cristina Pareja</h1>
           <div class="flex gap-4">
-            <a href="#" class="flex items-center gap-2 text-sm font-medium text-spotify hover:text-spotify-hover transition-colors">
+            <a href="<?php echo htmlspecialchars($config['url_spotify']); ?>" target="_blank" class="flex items-center gap-2 text-sm font-medium text-spotify hover:text-spotify-hover transition-colors">
               <i data-lucide="music" class="w-4 h-4"></i>
               Spotify <i data-lucide="external-link" class="w-3 h-3"></i>
             </a>
-            <a href="#" class="flex items-center gap-2 text-sm font-medium text-pink-500 hover:text-pink-400 transition-colors">
+            <a href="<?php echo htmlspecialchars($config['url_instagram']); ?>" target="_blank" class="flex items-center gap-2 text-sm font-medium text-pink-500 hover:text-pink-400 transition-colors">
               <i data-lucide="camera" class="w-4 h-4"></i>
               Instagram <i data-lucide="external-link" class="w-3 h-3"></i>
             </a>
@@ -64,8 +68,8 @@
       <!-- Tarjetas de KPIs -->
       <div class="flex flex-wrap md:flex-nowrap gap-4 w-full md:w-auto">
         <!-- Seguidores Instagram -->
-        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center">
-          <div class="flex items-center gap-2 text-neutral-400 mb-1">
+        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center text-center">
+          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-1">
             <i data-lucide="camera" class="w-4 h-4 text-pink-500"></i>
             <span class="text-xs font-semibold uppercase tracking-wider">Seguidores</span>
           </div>
@@ -73,8 +77,8 @@
         </div>
 
         <!-- Seguidores Spotify -->
-        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center">
-          <div class="flex items-center gap-2 text-neutral-400 mb-1">
+        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center text-center">
+          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-1">
             <i data-lucide="users" class="w-4 h-4 text-spotify"></i>
             <span class="text-xs font-semibold uppercase tracking-wider">Seguidores (Sp)</span>
           </div>
@@ -82,8 +86,8 @@
         </div>
 
         <!-- Oyentes Mensuales -->
-        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center">
-          <div class="flex items-center gap-2 text-neutral-400 mb-1">
+        <div class="flex-1 min-w-[140px] bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col items-center justify-center text-center">
+          <div class="flex items-center justify-center gap-2 text-neutral-400 mb-1">
             <i data-lucide="headphones" class="w-4 h-4 text-spotify"></i>
             <span class="text-xs font-semibold uppercase tracking-wider">Oyentes Mens.</span>
           </div>
@@ -149,8 +153,11 @@
     lucide.createIcons();
   </script>
 
-  <!-- Archivo de datos creado para el usuario -->
-  <script src="datos.js"></script>
+  <!-- Inyectar los datos parseados desde PHP hacia Javascript -->
+  <script>
+    // Se generan los datos de raspado desde PHP a un objeto global de Javascript
+    const DATOS_SCRAPING = <?php echo json_encode($datosScraping); ?>;
+  </script>
 
   <!-- Lógica de la aplicación -->
   <script src="app.js"></script>
