@@ -1,4 +1,9 @@
 <?php
+// Modo depuración activado para evitar pantallas en blanco (Error 500) en OVH
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Incluir el scraper para obtener los datos al cargar la página
 require_once 'scraper.php';
 ?>
