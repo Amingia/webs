@@ -147,4 +147,82 @@ $urlSpotify = isset($url_spotify_perfil) ? $url_spotify_perfil : '';
 
 // Ejecutar el raspado de forma segura
 $datosSpotify = rasparSpotifyReal($urlSpotify);
+
+// ==========================================
+// SISTEMA DE HISTORIAL LOCAL (FLAT-FILE JSON)
+// ==========================================
+function guardarHistorial($datos) {
+    $archivoHistorial = 'historial.json';
+    $fechaHoy = date('Y-m-d');
+    $historial = [];
+
+    // Si el archivo existe, leemos y decodificamos su contenido
+    if (file_exists($archivoHistorial)) {
+        $contenido = file_get_contents($archivoHistorial);
+        $historial = json_decode($contenido, true);
+        if (!is_array($historial)) {
+            $historial = [];
+        }
+    }
+
+    // Comprobamos si ya existe una entrada para el día de hoy
+    $existeHoy = false;
+    foreach ($historial as $entrada) {
+        if ($entrada['fecha'] === $fechaHoy) {
+            $existeHoy = true;
+            break;
+        }
+    }
+
+    // Solo guardamos si no hay entrada hoy y los datos son válidos numéricamente
+    // Aunque seguidores no esté disponible, intentamos guardar los oyentes y viceversa
+    if (!$existeHoy && ($datos['seguidores'] !== "No disponible" || $datos['oyentes'] !== "No disponible")) {
+        // Limpiamos los datos para guardar solo los números
+        // Ejemplo: "73.3M" -> 73300000, pero como pueden venir con K, M, etc., hacemos un procesamiento simple.
+        // La instrucción dice que se extraen con sus letras. Vamos a limpiarlo para la gráfica.
+
+        $parseNumero = function($str) {
+            $str = strtoupper(trim($str));
+            $multiplicador = 1;
+            $hasSuffix = false;
+
+            if (strpos($str, 'M') !== false) {
+                $multiplicador = 1000000;
+                $str = str_replace('M', '', $str);
+                $hasSuffix = true;
+            } else if (strpos($str, 'K') !== false) {
+                $multiplicador = 1000;
+                $str = str_replace('K', '', $str);
+                $hasSuffix = true;
+            }
+
+            // Si tiene sufijo (K o M), puede tener un punto o coma decimal (ej. "73.3M")
+            if ($hasSuffix) {
+                $str = str_replace(',', '.', $str);
+                return (int)(floatval($str) * $multiplicador);
+            } else {
+                // Si no tiene sufijo, los puntos o comas son separadores de miles y hay que quitarlos
+                $str = str_replace(['.', ','], '', $str);
+                return (int)$str;
+            }
+        };
+
+        $seguidores_num = ($datos['seguidores'] !== "No disponible") ? $parseNumero($datos['seguidores']) : null;
+        $oyentes_num = ($datos['oyentes'] !== "No disponible") ? $parseNumero($datos['oyentes']) : null;
+
+        $nuevaEntrada = [
+            'fecha' => $fechaHoy,
+            'seguidores' => $seguidores_num,
+            'oyentes' => $oyentes_num
+        ];
+
+        $historial[] = $nuevaEntrada;
+
+        // Guardar el archivo
+        @file_put_contents($archivoHistorial, json_encode($historial, JSON_PRETTY_PRINT));
+    }
+}
+
+// Intentar guardar el historial
+guardarHistorial($datosSpotify);
 ?>

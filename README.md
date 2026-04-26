@@ -17,3 +17,19 @@ El cliente no necesita saber programar ni lidiar con códigos de inserción Ifra
 3. **Guarda el archivo**.
 4. Sube por FTP los 3 archivos (`index.php`, `config.php`, `scraper.php`) a la carpeta `www` o `public_html` de tu servidor.
 5. Listo. El dashboard profesional ya está funcionando.
+
+## ¿Cómo configurar el Histórico Automático (Cron Job en OVH)?
+
+Para que la gráfica de "Evolución de Audiencia" crezca cada día con nuevos datos sin que tengas que hacer nada, debes configurar una "tarea planificada" (Cron Job) en tu panel de control.
+
+1. Entra a tu panel de control de OVH.
+2. Ve a la sección **Web Cloud** y selecciona tu alojamiento (Hosting).
+3. Busca la pestaña **Cron** o **Tareas planificadas**.
+4. Haz clic en **Añadir una planificación** (o "Añadir un Cron").
+5. En el formulario:
+    * **Comando a ejecutar:** Escribe la ruta hacia tu archivo `scraper.php` (por ejemplo: `www/scraper.php`).
+    * **Lenguaje:** Selecciona PHP (la versión más reciente que tengas).
+    * **Frecuencia:** Configúralo para que se ejecute "Todos los días a las 00:00" (o una vez al día).
+6. Guarda la configuración.
+
+¡Eso es todo! Cada medianoche, el sistema leerá los datos de Spotify y los guardará en un archivo llamado `historial.json` para dibujar tu gráfica al día siguiente.

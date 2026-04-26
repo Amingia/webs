@@ -17,6 +17,9 @@ require_once 'scraper.php';
   <!-- Tailwind CSS vía CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Chart.js vía CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <!-- Configuración personalizada de Tailwind -->
   <script>
     tailwind.config = {
@@ -85,7 +88,18 @@ require_once 'scraper.php';
       </div>
     </header>
 
-    <!-- 2. CUERPO (Rendimiento de Pistas) -->
+    <!-- 2. HISTÓRICO (Gráfica de Evolución de Audiencia) -->
+    <section class="bg-neutral-900/60 p-6 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl backdrop-blur-sm mb-8">
+      <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+        <i data-lucide="trending-up" class="w-6 h-6 text-spotify"></i>
+        Evolución de Audiencia
+      </h2>
+      <div class="relative w-full h-64 md:h-80">
+        <canvas id="audienciaChart"></canvas>
+      </div>
+    </section>
+
+    <!-- 3. CUERPO (Rendimiento de Pistas) -->
     <section class="bg-neutral-900/60 p-6 md:p-8 rounded-3xl border border-neutral-800 shadow-2xl backdrop-blur-sm">
       <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
         <i data-lucide="bar-chart-2" class="w-6 h-6 text-spotify"></i>
@@ -137,6 +151,148 @@ require_once 'scraper.php';
   <!-- Inicializa los iconos de Lucide -->
   <script>
     lucide.createIcons();
+  </script>
+
+  <?php
+    // Leer el historial para pasarlo a Chart.js
+    $fechas = [];
+    $oyentes_historico = [];
+    $seguidores_historico = [];
+
+    $archivoHistorial = 'historial.json';
+    if (file_exists($archivoHistorial)) {
+        $contenido = file_get_contents($archivoHistorial);
+        $historial = json_decode($contenido, true);
+
+        if (is_array($historial)) {
+            foreach ($historial as $entrada) {
+                // Formatear la fecha a dd/mm para que ocupe menos
+                $dateObj = DateTime::createFromFormat('Y-m-d', $entrada['fecha']);
+                $fechas[] = $dateObj ? $dateObj->format('d/m') : $entrada['fecha'];
+                $oyentes_historico[] = $entrada['oyentes'];
+                $seguidores_historico[] = $entrada['seguidores'];
+            }
+        }
+    }
+  ?>
+
+  <!-- Configuración de Chart.js -->
+  <script>
+    const ctx = document.getElementById('audienciaChart').getContext('2d');
+
+    // Inyección segura de datos PHP a JS
+    const etiquetasFechas = <?php echo json_encode($fechas); ?>;
+    const datosOyentes = <?php echo json_encode($oyentes_historico); ?>;
+    const datosSeguidores = <?php echo json_encode($seguidores_historico); ?>;
+
+    // Configuración del tema oscuro para la gráfica
+    Chart.defaults.color = '#9ca3af';
+    Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: etiquetasFechas.length > 0 ? etiquetasFechas : ['Hoy'],
+        datasets: [
+          {
+            label: 'Oyentes Mensuales',
+            data: datosOyentes.length > 0 ? datosOyentes : [<?php echo (isset($datosSpotify['oyentes']) && $datosSpotify['oyentes'] !== "No disponible") ? ((float)str_replace(['K', 'M', ','], ['', '', '.'], $datosSpotify['oyentes']) * (strpos($datosSpotify['oyentes'], 'M') !== false ? 1000000 : (strpos($datosSpotify['oyentes'], 'K') !== false ? 1000 : 1))) : 'null'; ?>],
+            borderColor: '#1DB954',
+            backgroundColor: 'rgba(29, 185, 84, 0.1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#1DB954',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Seguidores',
+            data: datosSeguidores.length > 0 ? datosSeguidores : [<?php echo (isset($datosSpotify['seguidores']) && $datosSpotify['seguidores'] !== "No disponible") ? ((float)str_replace(['K', 'M', ','], ['', '', '.'], $datosSpotify['seguidores']) * (strpos($datosSpotify['seguidores'], 'M') !== false ? 1000000 : (strpos($datosSpotify['seguidores'], 'K') !== false ? 1000 : 1))) : 'null'; ?>],
+            borderColor: '#3b82f6',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.4,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            align: 'end',
+            labels: {
+              usePointStyle: true,
+              boxWidth: 8,
+              font: {
+                weight: 'bold'
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(23, 23, 23, 0.9)',
+            titleColor: '#fff',
+            bodyColor: '#e5e5e5',
+            borderColor: '#404040',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  // Formato de miles
+                  label += new Intl.NumberFormat('es-ES').format(context.parsed.y);
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            grid: {
+              color: 'rgba(64, 64, 64, 0.4)',
+              drawBorder: false,
+            },
+            ticks: {
+              callback: function(value, index, values) {
+                if (value >= 1000000) {
+                  return (value / 1000000).toFixed(1) + 'M';
+                } else if (value >= 1000) {
+                  return (value / 1000).toFixed(1) + 'K';
+                }
+                return value;
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false,
+              drawBorder: false,
+            }
+          }
+        },
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+      }
+    });
   </script>
 </body>
 </html>
